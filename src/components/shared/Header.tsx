@@ -95,14 +95,24 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
           >
             Dashboard
           </NavLink>
+          {/* ⬅️ Aquí están los dos nuevos enlaces para las cajas */}
           <NavLink
-            to="/cashier"
+            to="/caja/boletos"
             className={({ isActive }) =>
               `font-semibold transition-colors ${isActive ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`
             }
           >
-            Caja
+            Caja Boletos
           </NavLink>
+          <NavLink
+            to="/caja/productos"
+            className={({ isActive }) =>
+              `font-semibold transition-colors ${isActive ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`
+            }
+          >
+            Caja Productos
+          </NavLink>
+          {/* ⬅️ Fin de los nuevos enlaces */}
           <NavLink
             to="/employees"
             className={({ isActive }) =>
