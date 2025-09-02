@@ -21,7 +21,7 @@ export class UserService {
     return userFound;
   }
 
-  async createUser (data: CreateUserDto): Promise<User> {
+  async registerUser (data: CreateUserDto): Promise<User> {
     const userExist = await this.prisma.user.findUnique({ where: { nameUser: data.nameUser } });
     if(userExist) throw new ConflictException(`User where name is ${data.nameUser} already exist.`);
     const roleFound = await this.prisma.role.findUnique({ where: { idRole: data.idRole } });

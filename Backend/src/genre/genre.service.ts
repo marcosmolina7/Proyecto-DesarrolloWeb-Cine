@@ -28,6 +28,8 @@ export class GenreService {
   async updateGenre (idGenre: number, data: UpdateGenreDto): Promise<Genre> {
     const genreFound = await this.prisma.genre.findUnique({ where: { idGenre } });
     if(!genreFound) throw new NotFoundException(`Genre with id is ${idGenre} does not exist.`);
+    const existGenre = await this.prisma.genre.findUnique({ where: { nameGenre: data.nameGenre } });
+    if(existGenre) throw new ConflictException(`Genre with name ${data.nameGenre} already exist.`);
     return this.prisma.genre.update({ where: { idGenre }, data });
   }
 

@@ -153,6 +153,59 @@ exports.Prisma.GenreScalarFieldEnum = {
   nameGenre: 'nameGenre'
 };
 
+exports.Prisma.AgeRatingScalarFieldEnum = {
+  idAgeRating: 'idAgeRating',
+  nameAgeRating: 'nameAgeRating',
+  descAgeRating: 'descAgeRating'
+};
+
+exports.Prisma.RoomScalarFieldEnum = {
+  idRoom: 'idRoom',
+  nameRoom: 'nameRoom'
+};
+
+exports.Prisma.CategorieScalarFieldEnum = {
+  idCategorie: 'idCategorie',
+  nameCategorie: 'nameCategorie'
+};
+
+exports.Prisma.SizeScalarFieldEnum = {
+  idSize: 'idSize',
+  nameSize: 'nameSize'
+};
+
+exports.Prisma.SupplierScalarFieldEnum = {
+  idSupplier: 'idSupplier',
+  nameSupplier: 'nameSupplier',
+  contactPersonSupplier: 'contactPersonSupplier',
+  phoneSupplier: 'phoneSupplier',
+  emailSupplier: 'emailSupplier',
+  addressSupplier: 'addressSupplier'
+};
+
+exports.Prisma.MovieScalarFieldEnum = {
+  idMovie: 'idMovie',
+  nameMovie: 'nameMovie',
+  durationMovie: 'durationMovie',
+  synapsisMovie: 'synapsisMovie',
+  realseDateMovie: 'realseDateMovie',
+  posterMovie: 'posterMovie',
+  idDirector: 'idDirector',
+  idAgeRating: 'idAgeRating'
+};
+
+exports.Prisma.SeatScalarFieldEnum = {
+  idSeat: 'idSeat',
+  rowSeat: 'rowSeat',
+  columnSeat: 'columnSeat'
+};
+
+exports.Prisma.RoomSeatScalarFieldEnum = {
+  idRoom: 'idRoom',
+  idSeat: 'idSeat',
+  state: 'state'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -174,7 +227,15 @@ exports.Prisma.ModelName = {
   User: 'User',
   Employee: 'Employee',
   Director: 'Director',
-  Genre: 'Genre'
+  Genre: 'Genre',
+  AgeRating: 'AgeRating',
+  Room: 'Room',
+  Categorie: 'Categorie',
+  Size: 'Size',
+  Supplier: 'Supplier',
+  Movie: 'Movie',
+  Seat: 'Seat',
+  RoomSeat: 'RoomSeat'
 };
 
 /**
