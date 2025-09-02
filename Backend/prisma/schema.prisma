@@ -44,9 +44,72 @@ model Employee {
 model Director {
   idDirector        Int       @id @default(autoincrement())
   nameDirector      String    @unique
+  movies            Movie[]
 }
 
 model Genre {
   idGenre           Int       @id @default(autoincrement())
   nameGenre         String    @unique
+}
+
+model AgeRating {
+  idAgeRating       Int       @id @default(autoincrement())
+  nameAgeRating     String    @unique
+  descAgeRating     String    @unique
+  movies            Movie[]
+}
+
+model Room {
+  idRoom    Int      @id @default(autoincrement())
+  nameRoom  String
+  roomSeats RoomSeat[]
+}
+
+model Categorie {
+  idCategorie       Int       @id @default(autoincrement())
+  nameCategorie     String    @unique
+}
+
+model Size {
+  idSize            Int       @id @default(autoincrement())
+  nameSize          String    @unique
+}
+
+model Supplier {
+  idSupplier            Int       @id @default(autoincrement())
+  nameSupplier          String    @unique
+  contactPersonSupplier String
+  phoneSupplier         String
+  emailSupplier         String    @unique
+  addressSupplier       String?
+} 
+
+model Movie {
+  idMovie               Int       @id @default(autoincrement())
+  nameMovie             String
+  durationMovie         Int
+  synapsisMovie         String
+  realseDateMovie      DateTime
+  posterMovie           String
+  idDirector            Int
+  director              Director  @relation(fields: [idDirector], references: [idDirector])
+  idAgeRating           Int
+  ageRating             AgeRating @relation(fields: [idAgeRating], references: [idAgeRating])
+}
+
+model Seat {
+  idSeat    Int      @id @default(autoincrement())
+  rowSeat   String
+  columnSeat Int
+  roomSeats RoomSeat[]
+}
+
+model RoomSeat {
+  idRoom   Int
+  idSeat   Int
+  state    String
+  room     Room @relation(fields: [idRoom], references: [idRoom])
+  seat     Seat @relation(fields: [idSeat], references: [idSeat])
+
+  @@id([idRoom, idSeat])
 }

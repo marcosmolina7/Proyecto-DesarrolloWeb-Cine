@@ -28,6 +28,8 @@ export class DirectorService {
   async updateDirector (idDirector: number, data: UpdateDirectorDto): Promise<Director> {
     const directorFound = await this.prisma.director.findUnique({ where: { idDirector } });
     if(!directorFound) throw new NotFoundException(`Director where id is ${idDirector} does not exist.`);
+    const existDirector = await this.prisma.director.findUnique({ where: { nameDirector: data.nameDirector } });
+    if(existDirector) throw new ConflictException(`Director with name ${data.nameDirector} already exist.`);
     return this.prisma.director.update({ where: { idDirector }, data });
   }
 
