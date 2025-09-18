@@ -1,5 +1,3 @@
-// src/components/shared/Header.tsx
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { NavLink, Link } from 'react-router-dom';
@@ -95,7 +93,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
           >
             Dashboard
           </NavLink>
-          {/* ⬅️ Aquí están los dos nuevos enlaces para las cajas */}
           <NavLink
             to="/caja/boletos"
             className={({ isActive }) =>
@@ -111,15 +108,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
             }
           >
             Caja Productos
-          </NavLink>
-          {/* ⬅️ Fin de los nuevos enlaces */}
-          <NavLink
-            to="/employees"
-            className={({ isActive }) =>
-              `font-semibold transition-colors ${isActive ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`
-            }
-          >
-            Empleados
           </NavLink>
         </nav>
 
