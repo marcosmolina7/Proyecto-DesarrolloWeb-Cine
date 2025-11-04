@@ -22,18 +22,12 @@ export class AgeRatingService {
   async createAgeRating (data: CreateAgeRatingDto): Promise<AgeRating> {
     const existAgeRating = await this.prisma.ageRating.findUnique({ where: { nameAgeRating: data.nameAgeRating } });
     if(existAgeRating) throw new ConflictException(`Age Rating with name ${data.nameAgeRating} already exist.`);
-    const existDescAgeRating = await this.prisma.ageRating.findUnique({ where: { descAgeRating: data.descAgeRating } });
-    if(existDescAgeRating) throw new ConflictException(`Age Rating Desc: ${data.descAgeRating} already exist.`);
     return this.prisma.ageRating.create({ data });
   }
 
   async updateAgeRating (idAgeRating: number, data: UpdateAgeRatingDto): Promise<AgeRating> {
     const ageRatingFound = await this.prisma.ageRating.findUnique({ where: { idAgeRating } });
     if(!ageRatingFound) throw new NotFoundException(`Age Rating with id is ${idAgeRating} does not exist.`);
-    const existAgeRating = await this.prisma.ageRating.findUnique({ where: { nameAgeRating: data.nameAgeRating } });
-    if(existAgeRating) throw new ConflictException(`Age Rating with name ${data.nameAgeRating} already exist.`);
-    const existDescAgeRating = await this.prisma.ageRating.findUnique({ where: { descAgeRating: data.descAgeRating } });
-    if(existDescAgeRating) throw new ConflictException(`Age Rating Desc: ${data.descAgeRating} already exist.`);
     return this.prisma.ageRating.update({ where: { idAgeRating }, data });
   }
 

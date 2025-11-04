@@ -22,12 +22,16 @@ model Role {
 }
 
 model User {
-  idUser   Int       @id @default(autoincrement())
-  nameUser String    @unique
-  passUser String
-  idRole   Int
-  role     Role      @relation(fields: [idRole], references: [idRole])
-  employee Employee?
+  idUser    Int         @id @default(autoincrement())
+  nameUser  String      @unique
+  passUser  String
+  idRole    Int
+  role      Role        @relation(fields: [idRole], references: [idRole])
+  employee  Employee?
+  sale      Sale[]
+  tickets   Tickets[]
+  reports   Reports[]
+  purchases Purchases[]
 }
 
 model Employee {
@@ -48,8 +52,9 @@ model Director {
 }
 
 model Genre {
-  idGenre   Int    @id @default(autoincrement())
-  nameGenre String @unique
+  idGenre     Int           @id @default(autoincrement())
+  nameGenre   String        @unique
+  movieGenres MovieGenres[]
 }
 
 model AgeRating {
@@ -63,38 +68,45 @@ model Room {
   idRoom    Int        @id @default(autoincrement())
   nameRoom  String
   roomSeats RoomSeat[]
+  showtimes Showtime[]
 }
 
 model Categorie {
-  idCategorie   Int    @id @default(autoincrement())
-  nameCategorie String @unique
+  idCategorie   Int        @id @default(autoincrement())
+  nameCategorie String     @unique
+  products      Products[]
 }
 
 model Size {
-  idSize   Int    @id @default(autoincrement())
-  nameSize String @unique
+  idSize   Int        @id @default(autoincrement())
+  nameSize String     @unique
+  products Products[]
 }
 
 model Supplier {
-  idSupplier            Int     @id @default(autoincrement())
-  nameSupplier          String  @unique
+  idSupplier            Int         @id @default(autoincrement())
+  nameSupplier          String      @unique
   contactPersonSupplier String
   phoneSupplier         String
-  emailSupplier         String  @unique
+  emailSupplier         String      @unique
   addressSupplier       String?
+  purchases             Purchases[]
 }
 
 model Movie {
-  idMovie         Int       @id @default(autoincrement())
+  idMovie         Int           @id @default(autoincrement())
   nameMovie       String
   durationMovie   Int
   synapsisMovie   String
   realseDateMovie DateTime
   posterMovie     String
+  stateMovie      Boolean       @default(true)
   idDirector      Int
-  director        Director  @relation(fields: [idDirector], references: [idDirector])
+  director        Director      @relation(fields: [idDirector], references: [idDirector])
   idAgeRating     Int
-  ageRating       AgeRating @relation(fields: [idAgeRating], references: [idAgeRating])
+  ageRating       AgeRating     @relation(fields: [idAgeRating], references: [idAgeRating])
+  showtime        Showtime[]
+  movieGenres     MovieGenres[]
 }
 
 model Seat {
@@ -105,11 +117,122 @@ model Seat {
 }
 
 model RoomSeat {
-  idRoom Int
-  idSeat Int
-  state  String
-  room   Room   @relation(fields: [idRoom], references: [idRoom])
-  seat   Seat   @relation(fields: [idSeat], references: [idSeat])
+  idRoom  Int
+  idSeat  Int
+  state   String
+  room    Room      @relation(fields: [idRoom], references: [idRoom])
+  seat    Seat      @relation(fields: [idSeat], references: [idSeat])
+  tickets Tickets[]
 
   @@id([idRoom, idSeat])
+}
+
+model Showtime {
+  idShowtime       Int       @id @default(autoincrement())
+  dateTimeShowtime DateTime
+  idRoom           Int
+  idMovie          Int
+  room             Room      @relation(fields: [idRoom], references: [idRoom])
+  movie            Movie     @relation(fields: [idMovie], references: [idMovie])
+  tickets          Tickets[]
+
+  @@index([idRoom, dateTimeShowtime])
+  @@index([idMovie])
+}
+
+model Sale {
+  idSale       Int            @id @default(autoincrement())
+  dateTimeSale DateTime
+  totalAmount  Decimal        @db.Decimal(10, 2)
+  idUser       Int
+  user         User           @relation(fields: [idUser], references: [idUser])
+  tickets      Tickets[]
+  productSale  ProductsSale[]
+
+  @@index([idUser])
+}
+
+model Tickets {
+  idTicket     Int      @id @default(autoincrement())
+  priceTicket  Decimal  @db.Decimal(10, 2)
+  qrCodeTicket String   @unique
+  idRoom       Int
+  idSeat       Int
+  idShowtime   Int
+  idUser       Int?
+  idSale       Int?
+  roomSeat     RoomSeat @relation(fields: [idRoom, idSeat], references: [idRoom, idSeat])
+  showtime     Showtime @relation(fields: [idShowtime], references: [idShowtime])
+  user         User?    @relation(fields: [idUser], references: [idUser])
+  sale         Sale?    @relation(fields: [idSale], references: [idSale])
+
+  @@unique([idRoom, idSeat, idShowtime])
+  @@index([idUser])
+  @@index([idSale])
+}
+
+model MovieGenres {
+  idMovie Int
+  idGenre Int
+
+  movie Movie @relation(fields: [idMovie], references: [idMovie])
+  genre Genre @relation(fields: [idGenre], references: [idGenre])
+
+  @@id([idMovie, idGenre])
+}
+
+model Products {
+  idProduct    Int     @id @default(autoincrement())
+  nameProduct  String  @unique
+  priceProduct Decimal @db.Decimal(10, 2)
+  stockProduct Int
+  stateProduct Boolean @default(true)
+
+  idCategorie Int
+  idSize      Int
+
+  category Categorie @relation(fields: [idCategorie], references: [idCategorie])
+  size     Size      @relation(fields: [idSize], references: [idSize])
+
+  productSale ProductsSale[]
+
+  @@index([idCategorie])
+  @@index([idSize])
+}
+
+model Reports {
+  idReport         Int      @id @default(autoincrement())
+  dateReport       DateTime @db.Date
+  typeReport       String
+  parametersReport String   @db.Text
+  idUser           Int
+
+  user User @relation(fields: [idUser], references: [idUser])
+
+  @@index([idUser])
+}
+
+model ProductsSale {
+  idSale    Int
+  idProduct Int
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  sale    Sale     @relation(fields: [idSale], references: [idSale])
+  product Products @relation(fields: [idProduct], references: [idProduct])
+
+  @@id([idSale, idProduct])
+  @@index([idProduct])
+}
+
+model Purchases {
+  idPurchase   Int      @id @default(autoincrement())
+  datePurchase DateTime @default(now()) // Utiliza DateTime para el campo Date
+  totalAmount  Decimal  @db.Decimal(10, 2) // Asumo que Int de la imagen es Decimal para dinero
+
+  idSupplier Int
+  idUser     Int
+
+  supplier Supplier @relation(fields: [idSupplier], references: [idSupplier])
+  user     User     @relation(fields: [idUser], references: [idUser])
 }

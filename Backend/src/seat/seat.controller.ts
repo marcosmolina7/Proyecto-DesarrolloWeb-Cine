@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Put, Param, Delete, UsePipes, ValidationPi
 import { SeatService } from './seat.service';
 import { CreateSeatDto } from './dto/create-seat.dto';
 import { UpdateSeatDto } from './dto/update-seat.dto';
+import { CreateBulkSeatsDto } from './dto/create-bulk-seats.dto'; // 1. Importar el nuevo DTO
 
 @Controller('seat')
 export class SeatController {
@@ -22,6 +23,15 @@ export class SeatController {
   @UsePipes(ValidationPipe)
   async createSeat (@Body() data: CreateSeatDto) {
     return this.seatService.createSeat(data);
+  }
+
+  //
+  // 2. NUEVO ENDPOINT PARA CREACIÓN MASIVA
+  //
+  @Post('bulk-create')
+  @UsePipes(ValidationPipe)
+  async createBulkSeats (@Body() data: CreateBulkSeatsDto) {
+    return this.seatService.createBulkSeats(data);
   }
 
   @Put(':id')

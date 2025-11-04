@@ -1,181 +1,300 @@
 // src/pages/Tickets/TicketPurchase.tsx
+// CORREGIDO: Se reemplaza SeatGrid por un nuevo visualizador interactivo (InteractiveSeatGrid)
+// que coincide con el layout de 'Crear Sala' (pantalla centrada, scroll H/V).
+// CORREGIDO: Arreglado el bug de scroll vertical (items-center -> items-start) y aumentada la altura (max-h-[50vh]).
+// CORREGIDO: handleContinue ahora BORRA la transacción anterior en lugar de fusionarla.
+// CORREGIDO: handleContinue ahora verifica si el usuario está autenticado antes de navegar a Checkout.
 
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useParams, Link } from 'react-router-dom';
-import SeatingChart from '../../components/ui/SeatingChart';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import axios, { isAxiosError } from 'axios';
+import { RotateCw, AlertTriangle, Armchair } from 'lucide-react'; 
+import AuthService from '../../services/AuthService'; // 1. Importar el servicio de Auth
 
-// Datos de ejemplo para las películas (cartelera y preventa)
-export const moviesData = [
-  {
-    id: 1,
-    title: "Misión Imposible: Deuda mortal",
-    poster: "https://m.media-amazon.com/images/M/MV5BNjU3MjQ0ZjItMmNmOS00NTYxLTljYjYtNWViNzM4MjQ0ZDQxXkEyXkFqcGdeQXVyMTA3MDk2NDg2._V1_FMjpg_UX1000_.jpg",
-    type: 'cartelera',
-    director: "Christopher McQuarrie",
-    description: "Ethan Hunt y su equipo se enfrentan a una nueva amenaza global.",
-    genre: "Acción, Aventura",
-    duration: "2h 36m",
-    releaseDate: "14 de julio de 2023",
-    trailer: "https://www.youtube.com/watch?v=2Tz8D1z3f2Q",
-    dates: [
-      { day: 'Hoy', date: '9 de Ago' },
-      { day: 'Mañana', date: '10 de Ago' },
-      { day: 'Lun', date: '11 de Ago' },
-      { day: 'Mar', date: '12 de Ago' },
-    ],
-    times: ['14:00', '16:30', '19:00', '21:30'],
-    price: 10,
-    purchaseText: "Selecciona tu función y asientos."
-  },
-  {
-    id: 2,
-    title: "Barbie",
-    poster: "https://m.media-amazon.com/images/M/MV5BYzJkY2MxMWUtYmMxMS00OTY1LWE4MjQtNjBlYTI0ZjdiMzMyXkEyXkFqcGdeQXVyMTUzMTg2ODkz._V1_FMjpg_UX1000_.jpg",
-    type: 'cartelera',
-    director: "Greta Gerwig",
-    description: "Barbie y Ken se divierten en el mundo de Barbieland, pero cuando tienen la oportunidad de ir al mundo real, descubren los altibajos de la vida.",
-    genre: "Comedia, Fantasía, Aventura",
-    duration: "1h 54m",
-    releaseDate: "20 de julio de 2023",
-    trailer: "https://www.youtube.com/watch?v=pBk4NYhGh2Y",
-    dates: [
-      { day: 'Hoy', date: '9 de Ago' },
-      { day: 'Mañana', date: '10 de Ago' },
-      { day: 'Lun', date: '11 de Ago' },
-      { day: 'Mar', date: '12 de Ago' },
-    ],
-    times: ['14:00', '16:30', '19:00', '21:30'],
-    price: 10,
-    purchaseText: "Selecciona tu función y asientos."
-  },
-  {
-    id: 3,
-    title: "Oppenheimer",
-    poster: "https://m.media-amazon.com/images/M/MV5BMzY1NGQxZWMtNzUyYS00MWFmLWE0ZTEtYjYwZWMxMTAyNTJjXkEyXkFqcGdeQXVyMTA3MDk2NDg2._V1_FMjpg_UX1000_.jpg",
-    type: 'cartelera',
-    director: "Christopher Nolan",
-    description: 'La historia de J. Robert Oppenheimer, el "padre de la bomba atómica".',
-    genre: "Biografía, Drama, Historia",
-    duration: "3h 0m",
-    releaseDate: "21 de julio de 2023",
-    trailer: "https://www.youtube.com/watch?v=F3x4K5tP-aE",
-    dates: [
-      { day: 'Hoy', date: '9 de Ago' },
-      { day: 'Mañana', date: '10 de Ago' },
-      { day: 'Lun', date: '11 de Ago' },
-      { day: 'Mar', date: '12 de Ago' },
-    ],
-    times: ['14:00', '16:30', '19:00', '21:30'],
-    price: 10,
-    purchaseText: "Selecciona tu función y asientos."
-  },
-  {
-    id: 4,
-    title: "Deadpool 3",
-    poster: "https://m.media-amazon.com/images/M/MV5BMzYxODQwOTQ3YkEyXkFqcGdeQXVyMTA3MDk2NDg2._V1_.jpg",
-    type: 'preventa',
-    director: "Shawn Levy",
-    description: "Una nueva aventura de Deadpool con un invitado especial. Preventa para el 20 de septiembre.",
-    genre: "Acción, Comedia, Ciencia Ficción",
-    duration: "2h 5m",
-    releaseDate: "20 de septiembre de 2025",
-    trailer: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    dates: [
-      { day: 'Vie', date: '30 de Ago' },
-      { day: 'Sab', date: '31 de Ago' },
-      { day: 'Dom', date: '1 de Sep' },
-      { day: 'Lun', date: '2 de Sep' },
-    ],
-    times: ['16:00', '18:30', '20:00', '22:30'],
-    price: 12,
-    purchaseText: "¡Asegura tus boletos antes que nadie!"
-  },
-  {
-    id: 5,
-    title: "Kung Fu Panda 4",
-    poster: "https://m.media-amazon.com/images/M/MV5BNzQ0NjM2NzE1N0tYkEyXkFqcGdeQXVyMTUzMTg2ODkz._V1_.jpg",
-    type: 'preventa',
-    director: "Mike Mitchell",
-    description: "Po debe encontrar un nuevo Guerrero Dragón mientras se enfrenta a una nueva villana. Preventa para el 15 de noviembre.",
-    genre: "Animación, Aventura, Comedia",
-    duration: "1h 34m",
-    releaseDate: "15 de noviembre de 2025",
-    trailer: "https://www.youtube.com/watch?v=kYmC6lJ2mG4",
-    dates: [
-      { day: 'Vie', date: '30 de Ago' },
-      { day: 'Sab', date: '31 de Ago' },
-      { day: 'Dom', date: '1 de Sep' },
-      { day: 'Lun', date: '2 de Sep' },
-    ],
-    times: ['16:00', '18:30', '20:00', '22:30'],
-    price: 12,
-    purchaseText: "¡Asegura tus boletos antes que nadie!"
-  },
-  {
-    id: 6,
-    title: "Godzilla x Kong: El nuevo imperio",
-    poster: "https://m.media-amazon.com/images/M/MV5BNzQ0NjM2NzE1N0tYkEyXkFqcGdeQXVyMTUzMTg2ODkz._V1_.jpg",
-    type: 'preventa',
-    director: "Adam Wingard",
-    description: "Los dos titanes se unen para luchar contra una amenaza desconocida. Preventa para el 10 de diciembre.",
-    genre: "Acción, Ciencia Ficción, Aventura",
-    duration: "1h 55m",
-    releaseDate: "10 de diciembre de 2025",
-    trailer: "https://www.youtube.com/watch?v=S0y_6D3_sB0",
-    dates: [
-      { day: 'Vie', date: '30 de Ago' },
-      { day: 'Sab', date: '31 de Ago' },
-      { day: 'Dom', date: '1 de Sep' },
-      { day: 'Lun', date: '2 de Sep' },
-    ],
-    times: ['16:00', '18:30', '20:00', '22:30'],
-    price: 12,
-    purchaseText: "¡Asegura tus boletos antes que nadie!"
-  },
-];
+const API_URL = 'http://localhost:3000';
 
-const generateSeats = () => {
-    const seatLabels = [];
-    const rows = ['A', 'B', 'C', 'D', 'E'];
-    const seatsPerRow = 10;
-    for (let i = 0; i < 48; i++) {
-        const row = rows[Math.floor(i / seatsPerRow)];
-        const seatNumber = (i % seatsPerRow) + 1;
-        seatLabels.push(`${row}-${seatNumber}`);
-    }
-    return seatLabels;
+// --- INTERFACES BASADAS EN schema.prisma ---
+interface Movie {
+  idMovie: number;
+  nameMovie: string;
+  posterMovie: string;
+}
+interface Seat { idSeat: number; rowSeat: string; columnSeat: number; }
+interface RoomSeat { idSeat: number; seat: Seat; state: string; }
+interface Room { idRoom: number; nameRoom: string; roomSeats: RoomSeat[]; }
+interface Ticket { idSeat: number; } 
+interface Showtime {
+  idShowtime: number;
+  dateTimeShowtime: string; // ISO String
+  idRoom: number;
+  room: Room; 
+  tickets: Ticket[]; 
+}
+// ---------------------------------------------
+
+const TICKET_PRICE = 50; 
+
+// 3. AÑADIDO: Helper para las filas
+const getRowLabel = (index: number): string => {
+    return String.fromCharCode(65 + index); // 65 es el código ASCII de 'A'
 };
 
-const seats = generateSeats();
+// --- 4. NUEVO COMPONENTE: Grid de Asientos Interactivo ---
+interface InteractiveSeatGridProps {
+  rows: string[]; // ['A', 'B', 'C']
+  seatsPerRow: number; // 10
+  selectedSeats: string[]; // ['A1', 'A5']
+  unavailableSeats: string[]; // ['B2', 'C3']
+  onSeatToggle: (seatId: string) => void;
+}
+
+const InteractiveSeatGrid: React.FC<InteractiveSeatGridProps> = ({ 
+    rows, 
+    seatsPerRow, 
+    selectedSeats, 
+    unavailableSeats, 
+    onSeatToggle 
+}) => {
+    
+    // Generamos las filas del grid
+    const grid = useMemo(() => {
+        return rows.map(rowLabel => {
+            const seatButtons = [];
+            for (let c = 1; c <= seatsPerRow; c++) {
+                const seatId = `${rowLabel}${c}`;
+                const isSelected = selectedSeats.includes(seatId);
+                const isUnavailable = unavailableSeats.includes(seatId);
+
+                // Definimos el color del asiento
+                let bgColor = 'bg-gray-600 hover:bg-gray-500'; // Disponible
+                if (isUnavailable) {
+                    bgColor = 'bg-red-800 cursor-not-allowed'; // Ocupado
+                }
+                if (isSelected) {
+                    bgColor = 'bg-green-600 hover:bg-green-500'; // Seleccionado por el usuario
+                }
+
+                seatButtons.push(
+                    <motion.button
+                        type="button"
+                        key={seatId}
+                        whileHover={{ scale: isUnavailable ? 1 : 1.1 }}
+                        whileTap={{ scale: isUnavailable ? 1 : 0.9 }}
+                        onClick={() => onSeatToggle(seatId)}
+                        disabled={isUnavailable}
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center font-semibold text-white transition-colors flex-shrink-0 ${bgColor}`}
+                    >
+                        {c}
+                    </motion.button>
+                );
+            }
+            return (
+                <div key={rowLabel} className="flex gap-2 items-center">
+                    <div className="w-8 text-center font-bold text-gray-400 flex-shrink-0">{rowLabel}</div>
+                    <div className="flex flex-nowrap gap-2">
+                        {seatButtons}
+                    </div>
+                </div>
+            );
+        });
+    }, [rows, seatsPerRow, selectedSeats, unavailableSeats, onSeatToggle]);
+
+    // Calculamos el ancho del grid + un padding
+    const gridWidth = useMemo(() => {
+        if (seatsPerRow === 0) return '90%';
+        const width = (40 * seatsPerRow) + (8 * (seatsPerRow - 1)) + 40; // 40px w, 8px gap, 40px padding
+        return `${width}px`;
+    }, [seatsPerRow]);
+
+
+    return (
+        <div className="p-4 bg-gray-700 rounded-lg">
+            <div className="flex justify-center mb-4 w-full">
+                <div className="bg-gray-800 text-gray-300 px-8 py-2 rounded-lg text-center font-mono w-full" style={{ maxWidth: gridWidth }}>
+                    PANTALLA
+                </div>
+            </div>
+            
+            <div className="flex justify-center items-start flex-grow overflow-auto p-2 w-full max-h-[50vh]">
+                <div className="flex flex-col items-start gap-3">
+                    {grid}
+                </div>
+            </div>
+            {/* Leyenda de colores */}
+            <div className="flex justify-center gap-4 mt-4 text-xs text-gray-300">
+                <span className="flex items-center"><span className="w-4 h-4 bg-gray-600 rounded mr-2"></span> Disponible</span>
+                <span className="flex items-center"><span className="w-4 h-4 bg-green-600 rounded mr-2"></span> Seleccionado</span>
+                <span className="flex items-center"><span className="w-4 h-4 bg-red-800 rounded mr-2"></span> Ocupado</span>
+            </div>
+        </div>
+    );
+};
+// --------------------------------------------------
+
 
 const TicketPurchase = () => {
-  const { id } = useParams<{ id: string }>();
-  const movie = moviesData.find(m => m.id === Number(id));
-  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = useState(movie?.dates[0].date);
-  const [selectedTime, setSelectedTime] = useState(movie?.times[0]);
+  const { id } = useParams<{ id: string }>(); 
+  const navigate = useNavigate();
 
-  if (!movie) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-        <h1 className="text-4xl font-bold">Película no encontrada</h1>
-      </div>
+  // ... (Estados sin cambios) ...
+  const [movie, setMovie] = useState<Movie | null>(null);
+  const [showtimes, setShowtimes] = useState<Showtime[]>([]);
+  const [selectedShowtime, setSelectedShowtime] = useState<Showtime | null>(null);
+  const [roomRows, setRoomRows] = useState<string[]>([]); 
+  const [seatsPerRow, setSeatsPerRow] = useState(0); 
+  const [unavailableSeats, setUnavailableSeats] = useState<string[]>([]); 
+  const [selectedSeats, setSelectedSeats] = useState<string[]>([]); 
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null); // 2. Nuevo estado para la alerta de login
+
+  // --- CARGA DE DATOS (Película y Horarios) ---
+  useEffect(() => {
+    // ... (fetchMovieAndShowtimes sin cambios) ...
+    if (!id) return;
+    const fetchMovieAndShowtimes = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const [movieRes, showtimesRes] = await Promise.all([
+          axios.get<Movie>(`${API_URL}/movie/${id}`),
+          axios.get<Showtime[]>(`${API_URL}/showtime/movie/${id}`) 
+        ]);
+        
+        setMovie(movieRes.data);
+        const sortedShowtimes = showtimesRes.data.sort((a, b) => 
+            new Date(a.dateTimeShowtime).getTime() - new Date(b.dateTimeShowtime).getTime()
+        );
+        setShowtimes(sortedShowtimes);
+        
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('No se pudieron cargar los datos de la película o los horarios.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchMovieAndShowtimes();
+  }, [id]);
+
+  // --- LÓGICA DE SELECCIÓN DE HORARIO ---
+  const handleShowtimeSelect = (showtime: Showtime) => {
+    // ... (lógica sin cambios) ...
+    setSelectedShowtime(showtime);
+    setSelectedSeats([]); 
+    setAuthError(null); // Limpiar error de auth si cambia la selección
+    
+    const soldSeatNames = showtime.tickets.map(ticket => {
+        const roomSeat = showtime.room.roomSeats.find(rs => rs.idSeat === ticket.idSeat);
+        if (!roomSeat) return null;
+        return `${roomSeat.seat.rowSeat}${roomSeat.seat.columnSeat}`;
+    }).filter(Boolean) as string[];
+    
+    setUnavailableSeats(soldSeatNames);
+
+    const rows = [...new Set(showtime.room.roomSeats.map(rs => rs.seat.rowSeat))].sort((a, b) => a.localeCompare(b));
+    
+    const cols = showtime.room.roomSeats.filter(rs => rs.seat.rowSeat === rows[0]).length;
+    
+    setRoomRows(rows);
+    setSeatsPerRow(cols > 0 ? cols : 0);
+  };
+  
+  // --- LÓGICA DE SELECCIÓN DE ASIENTOS ---
+  const handleSeatClick = (seatId: string) => {
+    // ... (lógica sin cambios) ...
+    if (unavailableSeats.includes(seatId)) return;
+    setAuthError(null); // Limpiar error de auth si cambia la selección
+    setSelectedSeats(prev => 
+      prev.includes(seatId)
+        ? prev.filter(s => s !== seatId)
+        : [...prev, seatId]
     );
-  }
-
-  const handleSeatClick = (seatLabel: string) => {
-    if (selectedSeats.includes(seatLabel)) {
-      setSelectedSeats(selectedSeats.filter(seat => seat !== seatLabel));
-    } else {
-      setSelectedSeats([...selectedSeats, seatLabel]);
-    }
   };
 
-  const totalPrice = selectedSeats.length * movie.price;
-  const titleText = movie.type === 'preventa' ? 'Preventa de boletos para ' : 'Compra de boletos para ';
-  const summaryTitle = movie.type === 'preventa' ? 'Resumen del Pedido de Preventa' : 'Resumen del Pedido';
-  const summaryText = movie.type === 'preventa' ? 'El pago se procesará al momento de la compra.' : 'Puedes agregar productos adicionales en el siguiente paso.';
+  // --- NAVEGAR A CHECKOUT ---
+  const handleContinue = () => {
+      
+      // 3. CORRECCIÓN: Verificar autenticación PRIMERO
+      if (!AuthService.isAuthenticated()) {
+          setAuthError("Debes iniciar sesión como cajero o administrador para continuar con la venta.");
+          // Opcional: Redirigir al login
+          // setTimeout(() => navigate('/login'), 2500);
+          return; // Detener la ejecución
+      }
+
+      // Si está autenticado, procede a crear la transacción
+      const transaction = {
+          selectedMovie: movie,
+          selectedShowtime,
+          selectedSeats, 
+          ticketsSubtotal: selectedSeats.length * TICKET_PRICE,
+          productCount: {},
+          productsSubtotal: 0
+      };
+      
+      localStorage.setItem('cashier-transaction', JSON.stringify(transaction));
+      
+      navigate('/checkout'); 
+  };
+  
+  // --- Helper para formatear y agrupar horarios ---
+  const groupedShowtimes = useMemo(() => {
+    // ... (lógica sin cambios) ...
+    return showtimes.reduce((acc, st) => {
+        const date = new Date(st.dateTimeShowtime).toLocaleDateString('es-GT', { weekday: 'long', day: 'numeric', month: 'short' });
+        if (!acc[date]) {
+            acc[date] = [];
+        }
+        acc[date].push(st);
+        return acc;
+    }, {} as Record<string, Showtime[]>);
+  }, [showtimes]);
+  
+
+  // --- RENDERIZADO ---
+  if (isLoading) {
+    return (
+        <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] bg-gray-900 text-white">
+          <RotateCw className="w-12 h-12 animate-spin text-blue-500" />
+        </div>
+    );
+  }
+  // ... (renderizado de error y !movie sin cambios) ...
+  if (error) {
+     return (
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] bg-gray-900 text-white">
+          <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
+          <h1 className="text-4xl font-bold mb-2">Error</h1>
+          <p className="text-xl text-gray-400">{error}</p>
+          <Link to="/" className="mt-4 px-6 py-2 bg-blue-600 rounded-lg hover:bg-blue-700">
+            Volver a la Cartelera
+          </Link>
+        </div>
+    );
+  }
+  if (!movie) {
+    return (
+        <div className="flex items-center justify-center min-h-[calc(100vh-8rem)] bg-gray-900 text-white">
+          <h1 className="text-4xl font-bold">Película no encontrada</h1>
+        </div>
+    );
+  }
+  
+  let posterUrl = 'https://placehold.co/100x150/1f2937/9ca3af?text=No+Poster';
+  if (movie.posterMovie) {
+    if (movie.posterMovie.startsWith('/')) {
+      posterUrl = `${API_URL}${movie.posterMovie}`;
+    } else {
+      posterUrl = `${API_URL}/${movie.posterMovie}`;
+    }
+  }
+  
+  const totalPrice = selectedSeats.length * TICKET_PRICE;
+  const titleText = `Compra de boletos para ${movie.nameMovie}`;
+  const summaryTitle = 'Resumen del Pedido';
+  const summaryText = 'Puedes agregar productos adicionales en el siguiente paso.';
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
@@ -185,81 +304,113 @@ const TicketPurchase = () => {
           animate={{ opacity: 1, y: 0 }} 
           className="text-4xl font-bold text-center mb-8"
         >
-          {titleText}{movie.title}
+          {titleText}
         </motion.h1>
 
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
           <div className="flex items-center space-x-4 mb-6">
-            <img src={movie.poster} alt={movie.title} className="w-24 h-36 rounded-lg object-cover" />
+            <img 
+              src={posterUrl} 
+              alt={movie.nameMovie} 
+              className="w-24 h-36 rounded-lg object-cover" 
+              onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x150/1f2937/9ca3af?text=Error';}}
+            />
             <div>
-              <h2 className="text-2xl font-bold text-blue-400">{movie.title}</h2>
-              <p className="text-gray-400">{movie.description}</p>
+              <h2 className="text-2xl font-bold text-blue-400">{movie.nameMovie}</h2>
             </div>
           </div>
 
+          {/* SELECCIÓN DE HORARIOS (DINÁMICA) */}
           <div className="mb-8">
             <h3 className="text-xl font-semibold mb-4">Selecciona fecha y hora</h3>
-            <div className="flex space-x-4 mb-4 overflow-x-auto">
-              {movie.dates.map(date => (
-                <button
-                  key={date.date}
-                  onClick={() => setSelectedDate(date.date)}
-                  className={`flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition-colors ${
-                    selectedDate === date.date ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  <p className="text-sm">{date.day}</p>
-                  <p className="text-xs">{date.date}</p>
-                </button>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-4">
-              {movie.times.map(time => (
-                <motion.button
-                  key={time}
-                  onClick={() => setSelectedTime(time)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                    selectedTime === time ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  {time}
-                </motion.button>
-              ))}
-            </div>
+            {Object.keys(groupedShowtimes).length === 0 && !isLoading ? (
+                <p className="text-gray-400">No hay funciones programadas para esta película.</p>
+            ) : (
+                Object.entries(groupedShowtimes).map(([date, showtimesOnDate]) => (
+                    <div key={date} className="mb-4">
+                        <p className="text-sm font-semibold text-gray-300 mb-2 capitalize">{date}</p>
+                        <div className="flex flex-wrap gap-4">
+                            {showtimesOnDate.map(st => (
+                                <motion.button
+                                    key={st.idShowtime}
+                                    onClick={() => handleShowtimeSelect(st)}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                                        selectedShowtime?.idShowtime === st.idShowtime 
+                                            ? 'bg-green-600 text-white' 
+                                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    }`}
+                                >
+                                    {new Date(st.dateTimeShowtime).toLocaleTimeString('es-GT', { timeStyle: 'short', hour12: true })}
+                                    <span className="text-xs ml-2 opacity-70">({st.room.nameRoom})</span>
+                                </motion.button>
+                            ))}
+                        </div>
+                    </div>
+                ))
+            )}
           </div>
 
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold mb-4">Selecciona tus asientos</h3>
-            <div className="bg-gray-700 p-4 rounded-lg">
-              <SeatingChart
-                seats={seats}
+          {/* SELECCIÓN DE ASIENTOS (DINÁMICA) */}
+          <AnimatePresence>
+          {selectedShowtime && (
+            <motion.div 
+                initial={{ opacity: 0, height: 0 }} 
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mb-8 overflow-hidden"
+            >
+              <h3 className="text-xl font-semibold mb-4">Selecciona tus asientos (Sala: {selectedShowtime.room.nameRoom})</h3>
+              
+              <InteractiveSeatGrid
+                rows={roomRows}
+                seatsPerRow={seatsPerRow}
                 selectedSeats={selectedSeats}
-                onSeatClick={handleSeatClick}
-                isClickable={true}
-                seatSize="w-8 h-8"
+                unavailableSeats={unavailableSeats}
+                onSeatToggle={handleSeatClick}
               />
-            </div>
-          </div>
+            </motion.div>
+          )}
+          </AnimatePresence>
           
+          {/* Resumen */}
           <div className="border-t border-gray-700 pt-6">
             <h3 className="text-xl font-semibold mb-4">{summaryTitle}</h3>
             <div className="flex justify-between items-center mb-2">
               <p className="text-gray-400">Boletos seleccionados ({selectedSeats.length})</p>
-              <p className="text-lg font-bold">{totalPrice} GTQ</p>
+              <p className="text-lg font-bold">{totalPrice.toFixed(2)} GTQ</p>
             </div>
             <p className="text-sm text-gray-500">{summaryText}</p>
             
-            <Link to="/cashier" className="block mt-6">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors"
-              >
-                Continuar a Complementos y Pago
-              </motion.button>
-            </Link>
+            {/* 4. AÑADIDO: Mensaje de alerta de autenticación */}
+            <AnimatePresence>
+                {authError && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="bg-red-800 p-3 rounded-lg text-sm text-red-100 my-4 flex items-center space-x-2"
+                    >
+                        <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                        <span>
+                            {authError} 
+                            <Link to="/login" className="font-bold underline hover:text-white ml-1">
+                                Iniciar Sesión Aquí
+                            </Link>
+                        </span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            
+            <motion.button
+              onClick={handleContinue}
+              disabled={selectedSeats.length === 0 || !selectedShowtime}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed mt-6"
+            >
+              Continuar a Complementos y Pago
+            </motion.button>
           </div>
         </div>
       </div>

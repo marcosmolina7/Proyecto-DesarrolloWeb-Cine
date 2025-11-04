@@ -190,6 +190,7 @@ exports.Prisma.MovieScalarFieldEnum = {
   synapsisMovie: 'synapsisMovie',
   realseDateMovie: 'realseDateMovie',
   posterMovie: 'posterMovie',
+  stateMovie: 'stateMovie',
   idDirector: 'idDirector',
   idAgeRating: 'idAgeRating'
 };
@@ -204,6 +205,76 @@ exports.Prisma.RoomSeatScalarFieldEnum = {
   idRoom: 'idRoom',
   idSeat: 'idSeat',
   state: 'state'
+};
+
+exports.Prisma.ShowtimeScalarFieldEnum = {
+  idShowtime: 'idShowtime',
+  dateTimeShowtime: 'dateTimeShowtime',
+  idRoom: 'idRoom',
+  idMovie: 'idMovie'
+};
+
+exports.Prisma.SaleScalarFieldEnum = {
+  idSale: 'idSale',
+  dateTimeSale: 'dateTimeSale',
+  totalAmount: 'totalAmount',
+  idUser: 'idUser'
+};
+
+exports.Prisma.TicketsScalarFieldEnum = {
+  idTicket: 'idTicket',
+  priceTicket: 'priceTicket',
+  qrCodeTicket: 'qrCodeTicket',
+  idRoom: 'idRoom',
+  idSeat: 'idSeat',
+  idShowtime: 'idShowtime',
+  idUser: 'idUser',
+  idSale: 'idSale'
+};
+
+exports.Prisma.MovieGenresScalarFieldEnum = {
+  idMovie: 'idMovie',
+  idGenre: 'idGenre'
+};
+
+exports.Prisma.ProductsScalarFieldEnum = {
+  idProduct: 'idProduct',
+  nameProduct: 'nameProduct',
+  priceProduct: 'priceProduct',
+  stockProduct: 'stockProduct',
+  stateProduct: 'stateProduct',
+  idCategorie: 'idCategorie',
+  idSize: 'idSize'
+};
+
+exports.Prisma.ReportsScalarFieldEnum = {
+  idReport: 'idReport',
+  dateReport: 'dateReport',
+  typeReport: 'typeReport',
+  parametersReport: 'parametersReport',
+  idUser: 'idUser'
+};
+
+exports.Prisma.ProductsSaleScalarFieldEnum = {
+  idSale: 'idSale',
+  idProduct: 'idProduct',
+  quantity: 'quantity',
+  unitPrice: 'unitPrice'
+};
+
+exports.Prisma.PurchasesScalarFieldEnum = {
+  idPurchase: 'idPurchase',
+  datePurchase: 'datePurchase',
+  totalAmount: 'totalAmount',
+  idSupplier: 'idSupplier',
+  idUser: 'idUser'
+};
+
+exports.Prisma.PurchasesItemsScalarFieldEnum = {
+  idPurchase: 'idPurchase',
+  idProduct: 'idProduct',
+  quantity: 'quantity',
+  costPrice: 'costPrice'
 };
 
 exports.Prisma.SortOrder = {
@@ -235,7 +306,16 @@ exports.Prisma.ModelName = {
   Supplier: 'Supplier',
   Movie: 'Movie',
   Seat: 'Seat',
-  RoomSeat: 'RoomSeat'
+  RoomSeat: 'RoomSeat',
+  Showtime: 'Showtime',
+  Sale: 'Sale',
+  Tickets: 'Tickets',
+  MovieGenres: 'MovieGenres',
+  Products: 'Products',
+  Reports: 'Reports',
+  ProductsSale: 'ProductsSale',
+  Purchases: 'Purchases',
+  PurchasesItems: 'PurchasesItems'
 };
 
 /**

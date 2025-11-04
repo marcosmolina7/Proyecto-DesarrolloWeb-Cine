@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import Footer from './Footer';
+// ✅ ELIMINADO: import Footer from './Footer';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -35,8 +35,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
 
-      {/* Pie de página */}
-      <Footer />
+      {/* ✅ ELIMINADO: <Footer /> */}
     </div>
   );
 };

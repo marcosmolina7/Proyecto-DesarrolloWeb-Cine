@@ -1,6 +1,9 @@
+// src/components/shared/Header.tsx
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { NavLink, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { LogOut, User, ChevronDown } from 'lucide-react';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -8,6 +11,22 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   const [isMoreOptionsOpen, setIsMoreOptionsOpen] = useState(false);
+  const { user, logout, isAuthenticated } = useAuth();
+
+  // Definir constantes de roles
+  const ROLE_ADMIN = 2;
+  const ROLE_CASHIER = 3;
+  const ROLE_CLIENT = 4;
+
+  // Flags de permisos
+  const isAdmin = user?.idRole === ROLE_ADMIN;
+  const isCashier = user?.idRole === ROLE_CASHIER;
+  const isClient = user?.idRole === ROLE_CLIENT;
+
+  // Función helper para determinar qué mostrar
+  const canViewPublicLinks = isAdmin || isCashier || isClient || !isAuthenticated;
+  const canViewDashboard = isAdmin;
+  const canViewPOS = isAdmin || isCashier;
 
   return (
     <motion.header
@@ -19,13 +38,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <button onClick={onMenuToggle} className="text-white focus:outline-none lg:hidden">
-            <svg
-              className="w-8 h-8"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
@@ -34,112 +47,107 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
           </Link>
         </div>
 
-        {/* Menú de navegación horizontal para pantallas grandes */}
+        {/* Menú de navegación condicional */}
         <nav className="hidden lg:flex items-center space-x-6 flex-grow justify-center">
-          <NavLink
-            to="/"
-            className={({ isActive }) =>
-              `font-semibold transition-colors ${isActive ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`
-            }
-          >
-            Cartelera
-          </NavLink>
-          <NavLink
-            to="/preventas"
-            className={({ isActive }) =>
-              `font-semibold transition-colors ${isActive ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`
-            }
-          >
-            Preventas
-          </NavLink>
-          <div
-            className="relative"
-            onMouseEnter={() => setIsMoreOptionsOpen(true)}
-            onMouseLeave={() => setIsMoreOptionsOpen(false)}
-          >
-            <span
-              className={`font-semibold cursor-pointer transition-colors ${isMoreOptionsOpen ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`}
-            >
-              Más Opciones
-            </span>
-            {isMoreOptionsOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="absolute top-full left-0 mt-2 w-40 bg-gray-800 rounded-lg shadow-lg py-2 border border-gray-700"
+          
+          {/* ENLACES PÚBLICOS - Visibles para todos */}
+          {canViewPublicLinks && (
+            <>
+              <NavLink to="/" className={({ isActive }) => `font-semibold transition-colors ${isActive ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`}>
+                Cartelera
+              </NavLink>
+
+              {/* Dropdown de Más Opciones */}
+              <div
+                className="relative"
+                onMouseEnter={() => setIsMoreOptionsOpen(true)}
+                onMouseLeave={() => setIsMoreOptionsOpen(false)}
               >
-                <Link
-                  to="/noticias"
-                  className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
-                >
-                  Noticias
-                </Link>
-                <Link
-                  to="/contacto"
-                  className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
-                >
-                  Contacto
-                </Link>
-              </motion.div>
-            )}
-          </div>
-          <NavLink
-            to="/dashboard"
-            className={({ isActive }) =>
-              `font-semibold transition-colors ${isActive ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`
-            }
-          >
-            Dashboard
-          </NavLink>
-          <NavLink
-            to="/caja/boletos"
-            className={({ isActive }) =>
-              `font-semibold transition-colors ${isActive ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`
-            }
-          >
-            Caja Boletos
-          </NavLink>
-          <NavLink
-            to="/caja/productos"
-            className={({ isActive }) =>
-              `font-semibold transition-colors ${isActive ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`
-            }
-          >
-            Caja Productos
-          </NavLink>
+                <button className={`font-semibold cursor-pointer transition-colors flex items-center gap-1 ${isMoreOptionsOpen ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`}>
+                  Más Opciones
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isMoreOptionsOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {isMoreOptionsOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full left-0 mt-2 w-40 bg-gray-800 rounded-lg shadow-lg py-2 border border-gray-700"
+                    >
+                      <Link 
+                        to="/noticias" 
+                        className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                        onClick={() => setIsMoreOptionsOpen(false)}
+                      >
+                        Noticias
+                      </Link>
+                      <Link 
+                        to="/contacto" 
+                        className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                        onClick={() => setIsMoreOptionsOpen(false)}
+                      >
+                        Contacto
+                      </Link>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </>
+          )}
+          
+          {/* DASHBOARD - Solo visible para Administrador */}
+          {canViewDashboard && (
+            <NavLink to="/dashboard" className={({ isActive }) => `font-semibold transition-colors ${isActive ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`}>
+              Dashboard
+            </NavLink>
+          )}
+
+          {/* PUNTO DE VENTA - Visible para Admin y Cajero */}
+          {canViewPOS && (
+            <>
+              <NavLink to="/caja/boletos" className={({ isActive }) => `font-semibold transition-colors ${isActive ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`}>
+                Caja Boletos
+              </NavLink>
+              <NavLink to="/caja/productos" className={({ isActive }) => `font-semibold transition-colors ${isActive ? 'text-blue-500' : 'text-gray-300 hover:text-white'}`}>
+                Caja Productos
+              </NavLink>
+            </>
+          )}
+
         </nav>
 
-        {/* Buscador y Login */}
+        {/* ✅ CORREGIDO: Eliminado el buscador - Solo Login/Logout */}
         <div className="flex items-center space-x-4">
-          <div className="relative hidden md:block">
-            <input
-              type="text"
-              placeholder="Buscar películas..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg
-                className="w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+          {isAuthenticated ? (
+            <div className="hidden md:flex items-center space-x-3">
+              <span className="text-white font-semibold text-sm flex items-center">
+                <User className="w-4 h-4 mr-1" />
+                {user?.nameUser} ({user?.roleName}) 
+              </span>
+              <motion.button
+                onClick={logout}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center space-x-2"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+                <LogOut className="w-4 h-4" />
+                <span>Salir</span>
+              </motion.button>
             </div>
-          </div>
-          <Link to="/login" className="hidden md:block">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Ingresar
-            </motion.button>
-          </Link>
+          ) : (
+            <Link to="/login" className="hidden md:block">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              >
+                Ingresar
+              </motion.button>
+            </Link>
+          )}
         </div>
       </div>
     </motion.header>

@@ -1,4 +1,4 @@
-import { IsDateString, IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsNumber, IsString } from "class-validator";
 
 export class CreateMovieDto {
 
@@ -14,13 +14,17 @@ export class CreateMovieDto {
   @IsNotEmpty()
   synapsisMovie: string;
   
-  @IsDateString()
+  @IsString()
   @IsNotEmpty()
   realseDateMovie: string;
 
   @IsString()
   @IsNotEmpty()
   posterMovie: string;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  stateMovie: boolean;
 
   @IsNumber()
   @IsNotEmpty()
